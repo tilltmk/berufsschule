@@ -5,8 +5,8 @@ echo "router-firewall" > /etc/hostname
 sed -i 's/127.0.1.1.*/127.0.1.1 router-firewall/' /etc/hosts
 
 # Netzwerkschnittstellen konfigurieren
-ip addr add 192.168.21.1/24 dev ens4     # L2-LAN-Network
-ip addr add 192.168.61.1/24 dev ens5     # L2-DMZ-Network
+ip addr add 192.168.33.1/24 dev ens4     # L2-LAN-Network
+ip addr add 192.168.73.1/24 dev ens5     # L2-DMZ-Network
 ip link set ens4 up
 ip link set ens5 up
 
@@ -17,12 +17,12 @@ ip route add default via 10.132.48.1
 cat <<EOT >> /etc/network/interfaces
 auto ens4
 iface ens4 inet static
-    address 192.168.21.1
+    address 192.168.33.1
     netmask 255.255.255.0
 
 auto ens5
 iface ens5 inet static
-    address 192.168.61.1
+    address 192.168.73.1
     netmask 255.255.255.0
 EOT
 
@@ -36,8 +36,8 @@ nft add chain inet filter input { type filter hook input priority 0 \; policy ac
 nft add chain inet filter forward { type filter hook forward priority 0 \; policy accept \; }
 nft add chain inet filter output { type filter hook output priority 0 \; policy accept \; }
 
-nft add rule inet filter forward ip saddr 192.168.21.0/24 oifname "ens3" accept
-nft add rule inet filter forward ip saddr 192.168.61.0/24 oifname "ens3" accept
+nft add rule inet filter forward ip saddr 192.168.33.0/24 oifname "ens3" accept
+nft add rule inet filter forward ip saddr 192.168.73.0/24 oifname "ens3" accept
 
 nft add table nat
 nft add chain nat postrouting { type nat hook postrouting priority 100 \; }
