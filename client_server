@@ -1,49 +1,27 @@
 #!/bin/bash
 
 # Hostname ändern
-echo "router-firewall" > /etc/hostname
-sed -i 's/127.0.1.1.*/127.0.1.1 router-firewall/' /etc/hosts
+echo "server" > /etc/hostname
+sed -i 's/127.0.1.1.*/127.0.1.1 server/' /etc/hosts
 
-# Netzwerkschnittstellen konfigurieren
-ip addr add 192.168.21.1/24 dev ens4     # L2-LAN-Network
-ip addr add 192.168.61.1/24 dev ens5     # L2-DMZ-Network
+# Netzwerkschnittstelle konfigurieren
+ip addr add 192.168.73.2/24 dev ens4     # L2-DMZ-Network
 ip link set ens4 up
-ip link set ens5 up
-
-# Default Route setzen
-ip route add default via 10.132.48.1
 
 # IP-Einstellungen dauerhaft speichern
 cat <<EOT >> /etc/network/interfaces
 auto ens4
 iface ens4 inet static
-    address 192.168.21.1
+    address 192.168.73.2
     netmask 255.255.255.0
-
-auto ens5
-iface ens5 inet static
-    address 192.168.61.1
-    netmask 255.255.255.0
+    gateway 192.168.73.1
 EOT
 
 # Sudo installieren und für den Benutzer 'user' erlauben
 apt update && apt install sudo -y
 usermod -aG sudo user
 
-# Internetzugang einrichten (nftables)
-nft add table inet filter
-nft add chain inet filter input { type filter hook input priority 0 \; policy accept \; }
-nft add chain inet filter forward { type filter hook forward priority 0 \; policy accept \; }
-nft add chain inet filter output { type filter hook output priority 0 \; policy accept \; }
-
-nft add rule inet filter forward ip saddr 192.168.21.0/24 oifname "ens3" accept
-nft add rule inet filter forward ip saddr 192.168.61.0/24 oifname "ens3" accept
-
-nft add table nat
-nft add chain nat postrouting { type nat hook postrouting priority 100 \; }
-nft add rule nat postrouting oifname "ens3" masquerade
-
 # Prüfen der Konfiguration
 ip addr show
 ip route show
-nft list ruleset
+ss -tuln
