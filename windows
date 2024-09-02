@@ -1,4 +1,16 @@
-netsh interface ip set address "Ethernet" static 192.168.21.2 255.255.255.0 192.168.21.1
+@echo off
+
+:: Netzwerkschnittstelle konfigurieren
+netsh interface ip set address "Ethernet" static 192.168.33.2 255.255.255.0 192.168.33.1
+
+:: DNS-Server konfigurieren (falls erforderlich)
+netsh interface ip set dns "Ethernet" static 192.168.95.40
+
+:: IP-Einstellungen anzeigen
 netsh interface ip show config
+
+:: Offene (listen) Ports anzeigen
 netstat -an | find "LISTEN"
+
+:: Routingtabelle anzeigen
 route print
