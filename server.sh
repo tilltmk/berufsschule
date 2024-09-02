@@ -1,30 +1,29 @@
 #!/bin/bash
 
 # Variablen
-KL_NR="21" # Aus FIB21 -> 21 extrahiert
-DMZ_NET="192.168.$((KL_NR + 40)).0/24"
-SERVER_IP="192.168.$((KL_NR + 40)).2"
+KL_NR="FIB21" 
+DMZ_NET="192.168.$((21 + 40)).0/24" # KL_NR ist hier auf 21 basierend auf "FIB21"
+SERVER_IP="192.168.$((21 + 40)).2"
 GATEWAY="10.132.48.1"
-HOSTNAME="server-tomczak"
-NIC_NAME="02:01:04:52:00:03" # Die MAC-Adresse der NIC im Screenshot
+HOSTNAME="Server"
 
 # a. Hostname ändern
 echo "Ändere den Hostnamen zu $HOSTNAME"
-sudo hostnamectl set-hostname $HOSTNAME
-echo "127.0.1.1 $HOSTNAME" | sudo tee -a /etc/hosts
+hostnamectl set-hostname $HOSTNAME
+echo "127.0.1.1 $HOSTNAME" | tee -a /etc/hosts
 
 # b. Netzwerk konfigurieren (L2-DMZ-Network)
-echo "Konfiguriere Netzwerkkarte mit IP $SERVER_IP"
-sudo ip addr add $SERVER_IP/24 dev $NIC_NAME
-sudo ip link set $NIC_NAME up
+echo "Konfiguriere Netzwerkkarte ens3 mit IP $SERVER_IP"
+ip addr add $SERVER_IP dev ens3
+ip link set ens3 up
 
 # c. Schnittstellen aktivieren
 echo "Aktiviere Schnittstellen"
-sudo ip link set $NIC_NAME up
+ip link set ens3 up
 
 # d. Konfiguration überprüfen
 echo "Überprüfe Netzwerkkonfiguration..."
-ip addr show $NIC_NAME
+ip addr show ens3
 ip route show
 
 # e. Routing-Tabelle überprüfen
@@ -40,9 +39,9 @@ echo "Teste Konnektivität zum Router"
 ping -c 4 $GATEWAY
 
 echo "Teste SSH-Server auf dem Server"
-sudo apt-get install -y openssh-server
-sudo systemctl start ssh
-sudo systemctl enable ssh
+apt-get install -y openssh-server
+systemctl start ssh
+systemctl enable ssh
 systemctl status ssh
 
 echo "Teste SSH-Server auf dem Router"
@@ -55,11 +54,11 @@ fi
 
 # h. IP-Einstellungen in Konfigurationsdatei eintragen
 echo "Trage IP-Einstellungen in Konfigurationsdatei ein"
-echo -e "auto $NIC_NAME\niface $NIC_NAME inet static\naddress $SERVER_IP\nnetmask 255.255.255.0\ngateway $GATEWAY" | sudo tee -a /etc/network/interfaces
+echo -e "auto ens3\niface ens3 inet static\naddress $SERVER_IP\nnetmask 255.255.255.0\ngateway $GATEWAY" | tee -a /etc/network/interfaces
 
 # i. sudo Rechte einrichten
 echo "Richte sudo Rechte ein"
-sudo apt-get install -y sudo
+apt-get install -y sudo
 
 # j. Offene Ports auf Router und Server prüfen
 echo "Prüfe offene Ports auf dem Server"
@@ -74,7 +73,7 @@ echo "Dokumentiere Befehle und Tests in $LOGFILE"
 {
     echo "Hostname: $HOSTNAME"
     echo "Netzwerkkonfiguration:"
-    ip addr show $NIC_NAME
+    ip addr show ens3
     echo "Routing-Tabelle:"
     ip route show
     echo "Internetverbindungstest:"
@@ -85,6 +84,6 @@ echo "Dokumentiere Befehle und Tests in $LOGFILE"
     systemctl status ssh
     echo "Offene Ports:"
     ss -tuln
-} | sudo tee -a $LOGFILE
+} | tee -a $LOGFILE
 
 echo "Konfiguration abgeschlossen!"
